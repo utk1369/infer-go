@@ -1,0 +1,51 @@
+{
+  "id": "123xxxx456",
+  "name": "Test Expression All",
+  "policy": "default",
+  "country": "SG",
+  "desc": "Checking all match for expression",
+  "require": "all",
+  "when": [
+    {
+      "require": "all",
+      "desc": "Mandatory fields Check",
+      "expressions": [
+        {
+          "require": "all",
+          "desc": "Test Expression",
+          "rulers": [
+            {
+              "require": "all",
+              "rules": [
+                {
+                  "comparator": "gt",
+                  "path": "test.age",
+                  "value": 2
+                },
+                {
+                  "comparator": "exists",
+                  "path": "test.details.name"
+                }
+              ]
+            },
+            {
+              "require": "any",
+              "rules": [
+                {
+                  "comparator": "eq",
+                  "path": "test.age",
+                  "value": 171
+                },
+                {
+                  "comparator": "eq",
+                  "path": "test.details.name",
+                  "value": "testx"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

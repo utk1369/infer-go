@@ -2,10 +2,15 @@ package ruler
 
 import (
 	"encoding/json"
-	"github.com/tj/go-debug"
 	"reflect"
 	"regexp"
 	"strings"
+
+	"fmt"
+
+	"errors"
+
+	"github.com/tj/go-debug"
 )
 
 var ruleDebug = debug.Debug("ruler:rule")
@@ -29,7 +34,16 @@ const (
 )
 
 type Ruler struct {
-	rules []*Rule
+	Require *string `json:"require"`
+	Rules   []*Rule `json:"rules"`
+}
+
+func (ruler *Ruler) String() string {
+	rules := "Rules: "
+	for _, rule := range ruler.Rules {
+		rules = rules + "\n" + "\t" + rule.String() + ", "
+	}
+	return rules
 }
 
 // creates a new Ruler for you
@@ -38,7 +52,8 @@ type Ruler struct {
 func NewRuler(rules []*Rule) *Ruler {
 	if rules != nil {
 		return &Ruler{
-			rules,
+			Require: nil,
+			Rules:   rules,
 		}
 	}
 
@@ -68,7 +83,7 @@ func (r *Ruler) Rule(path string) *RulerRule {
 		nil,
 	}
 
-	r.rules = append(r.rules, rule)
+	r.Rules = append(r.Rules, rule)
 
 	return &RulerRule{
 		r,
@@ -76,38 +91,89 @@ func (r *Ruler) Rule(path string) *RulerRule {
 	}
 }
 
-// tests all the rules (i.e. filters) in your set of rules,
+func (r *Ruler) Test(o map[string]interface{}) (bool, map[string]interface{}, error) {
+	// Test All By Default for backward compatibility
+	if r.Require == nil || *r.Require == "all" {
+		v, extra := testAll(r, o)
+		return v, extra, nil
+	} else if *r.Require == "any" {
+		v, extra := testAny(r, o)
+		return v, extra, nil
+	}
+	return false, nil, errors.New("invalid require condition: " + *r.Require + " for ruler: " + r.String())
+}
+
+// tests all the Rules (i.e. filters) in your set of Rules,
 // given a map that looks like a JSON object
 // (map[string]interface{})
-func (r *Ruler) Test(o map[string]interface{}) bool {
-	for _, f := range r.rules {
+func testAll(r *Ruler, o map[string]interface{}) (bool, map[string]interface{}) {
+	for _, f := range r.Rules {
 		val := pluck(o, f.Path)
+		failureExtra := "Rule: [" + fmt.Sprint(f) + "] did not pass."
 
-		if val != nil {
+		if val != nil && f.Value != nil {
 			// both the actual and expected value must be comparable
 			a := reflect.TypeOf(val)
 			e := reflect.TypeOf(f.Value)
 
 			if !a.Comparable() || !e.Comparable() {
-				return false
+				return false, map[string]interface{}{"Ruler": failureExtra}
 			}
 
 			if !r.compare(f, val) {
-				return false
+				return false, map[string]interface{}{"Ruler": failureExtra}
 			}
-		} else if val == nil && (f.Comparator == "exists" || f.Comparator == "nexists") {
-			// either one of these can be done
-			return r.compare(f, val)
+		} else if f.Value == nil && (f.Comparator == "exists" || f.Comparator == "nexists") {
+			if !r.compare(f, val) {
+				return false, map[string]interface{}{"Ruler": failureExtra}
+			}
+		} else if val == nil && f.Value != nil {
+			return false, map[string]interface{}{"Ruler": failureExtra}
 		} else {
 			ruleDebug("did not find property (%s) on map", f.Path)
 			// if we couldn't find the value on the map
 			// and the comparator isn't exists/nexists, this fails
-			return false
+			return false, map[string]interface{}{"Ruler": failureExtra}
 		}
 
 	}
+	return true, nil
+}
 
-	return true
+// tests any of the Rules in your set of Rules,
+// given a map that looks like a JSON object
+// (map[string]interface{})
+func testAny(r *Ruler, o map[string]interface{}) (bool, map[string]interface{}) {
+	for _, f := range r.Rules {
+		val := pluck(o, f.Path)
+
+		if val != nil && f.Value != nil {
+			// both the actual and expected value must be comparable
+			a := reflect.TypeOf(val)
+			e := reflect.TypeOf(f.Value)
+
+			if !a.Comparable() || !e.Comparable() {
+				continue
+			}
+
+			if r.compare(f, val) {
+				return true, nil
+			}
+		} else if f.Value == nil && (f.Comparator == "exists" || f.Comparator == "nexists") {
+			if r.compare(f, val) {
+				return true, nil
+			}
+		} else if val == nil && f.Value != nil {
+			continue
+		} else {
+			ruleDebug("did not find property (%s) on map", f.Path)
+			// if we couldn't find the value on the map
+			// and the comparator isn't exists/nexists, this fails
+			continue
+		}
+
+	}
+	return false, map[string]interface{}{"Ruler": *r}
 }
 
 // compares real v. actual values

@@ -1,7 +1,9 @@
 package ruler
 
+import "fmt"
+
 /*
-This struct is the main format for rules or conditions in ruler-compatable libraries.
+This struct is the main format for Rules or conditions in ruler-compatable libraries.
 Here's a sample in JSON format:
 	{
 		"comparator": "eq",
@@ -12,7 +14,7 @@ Here's a sample in JSON format:
 Valid comparators are: eq, neq, lt, lte, gt, gte, contains (regex), ncontains (!regex)
 
 This struct is exported here so that you can include it in your own JSON encoding/decoding,
-but go-ruler has a facility to help decode your rules from JSON into its own structs.
+but go-ruler has a facility to help decode your Rules from JSON into its own structs.
 */
 type Rule struct {
 	Comparator string      `json:"comparator"`
@@ -20,9 +22,13 @@ type Rule struct {
 	Value      interface{} `json:"value"`
 }
 
+func (rule *Rule) String() string {
+	return rule.Path + " " + rule.Comparator + " " + fmt.Sprint(rule.Value)
+}
+
 /*
-A RulerRule combines a single rule and a whole set of rules and is used
-when building rules programmatically through Ruler's Rule() function.
+A RulerRule combines a single rule and a whole set of Rules and is used
+when building Rules programmatically through Ruler's Rule() function.
 It's not meant to be created directly.
 */
 type RulerRule struct {
@@ -71,7 +77,7 @@ func (rf *RulerRule) NotMatches(value interface{}) *RulerRule {
 }
 
 // Stops chaining for the current rule, allowing you
-// to add rules for other properties
+// to add Rules for other properties
 func (rf *RulerRule) End() *Ruler {
 	return rf.Ruler
 }
@@ -111,7 +117,7 @@ func (rf *RulerRule) compare(comp int, value interface{}) *RulerRule {
 			},
 		}
 		// attach the new filter to the ruler
-		rf.Ruler.rules = append(rf.Ruler.rules, rf.Rule)
+		rf.Ruler.Rules = append(rf.Ruler.Rules, rf.Rule)
 	} else {
 		//if there is no comparator, we can just set things on the current filter
 		rf.Comparator = comparator

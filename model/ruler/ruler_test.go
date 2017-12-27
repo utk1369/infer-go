@@ -1,6 +1,8 @@
 package ruler
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestRules(t *testing.T) {
 
@@ -120,13 +122,14 @@ func TestRules(t *testing.T) {
 
 	for _, c := range cases {
 		r := &Ruler{
-			rules: c.rules,
+			Rules: c.rules,
 		}
-
-		if !r.Test(c.o) {
-			t.Errorf("rule test failed! %s\n rules: %s",
+		testRes, extra, _ := r.Test(c.o)
+		if !testRes {
+			t.Errorf("rule test failed! %s\n Rules: %s, Reason: %s",
 				c.name,
 				c.rules,
+				extra,
 			)
 		}
 	}
@@ -296,8 +299,10 @@ func TestNewRulerWithJson(t *testing.T) {
 		"name": "Thomas",
 	}
 
-	if !r.Test(data) {
-		t.Error("newRulerWithJson didn't do something properly!")
+	testRes, extra, _ := r.Test(data)
+
+	if !testRes {
+		t.Error("newRulerWithJson didn't do something properly! ", extra)
 	}
 }
 
@@ -315,9 +320,10 @@ func BenchmarkNewRulerWithJson(b *testing.B) {
 		if err != nil {
 			b.Errorf("Error getting new ruler w/json: %s", err)
 		}
+		testRes, extra, _ := r.Test(data)
 
-		if !r.Test(data) {
-			b.Error("newRulerWithJson didn't do something properly!")
+		if !testRes {
+			b.Error("newRulerWithJson didn't do something properly! ", extra)
 		}
 	}
 }
@@ -338,8 +344,10 @@ func BenchmarkNewRulerWithRulesSimple(b *testing.B) {
 	for i := 0; i < b.N; i += 1 {
 		r := NewRuler(filters)
 
-		if !r.Test(data) {
-			b.Error("NewRuler didn't do something properly!")
+		testRes, extra, _ := r.Test(data)
+
+		if !testRes {
+			b.Error("newRulerWithJson didn't do something properly! ", extra)
 		}
 	}
 }
@@ -426,8 +434,10 @@ func BenchmarkNewRulerWithRulesTen(b *testing.B) {
 	for i := 0; i < b.N; i += 1 {
 		r := NewRuler(filters)
 
-		if !r.Test(data) {
-			b.Error("NewRuler didn't do something properly!")
+		testRes, extra, _ := r.Test(data)
+
+		if !testRes {
+			b.Error("newRulerWithJson didn't do something properly! ", extra)
 		}
 	}
 }

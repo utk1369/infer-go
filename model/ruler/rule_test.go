@@ -10,7 +10,7 @@ func TestNewFilterWhenComparatorExists(t *testing.T) {
 	}
 
 	r := &Ruler{
-		rules: []*Rule{rule},
+		Rules: []*Rule{rule},
 	}
 
 	rf := &RulerRule{
