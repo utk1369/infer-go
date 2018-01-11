@@ -1,68 +1,19 @@
-# go-ruler
+# infer-go
 
-json-y object testing in go
+json-y object testing in go. forked from go-ruler
 
 ## Installation
 
 ```
-go get github.com/hopkinsth/go-ruler
+go get github.com/utk1369/infer-go
 ```
 
 ## Introduction
 
-go-ruler is an implementaion of [ruler](https://github.com/RedVentures/ruler) in go, partly as an experiment, eventually as an optimization strategy. go-ruler supports programmatically constructing rules in a way similar to js-ruler and can also process rules stored in arrays of JSON objects with this structure:
+infer-go is a fork from go-ruler with multiple additional features:
+1. Support for And / OR conditions
+2. Building bigger expressions in a generic way
+3. Defining rules over an array
 
-```json
-{
-  "comparator": "eq",
-  "path": "library.name",
-  "value": "go-ruler"
-}
-```
 
-Each of those objects (or 'filters') describes a condition for a property on some JSON object or json-object-esque structure. (In this go implementation, we're using `map[string]interface{}`.)
-
-## Example
-
-```go
-package main
-
-import "github.com/hopkinsth/go-ruler"
-import "fmt"
-
-func main() {
-  rules := []byte(`[
-    {"comparator": "eq", "path": "library.name", "value": "go-ruler"},
-    {"comparator": "gt", "path": "library.age", "value": 0.5}
-  ]`)
-
-  // supports loading rules from JSON data
-  engine, _ := ruler.NewRulerWithJson(rules)
-
-  // can also build rules programmatically
-  engine = ruler.NewRuler()
-  engine.Rule("library.name").
-    Eq("go-ruler").
-    End().
-  Rule("library.age").
-    Gt(0.5)
-
-  result := engine.Test(map[string]interface{}{
-    "library": map[string]interface{}{
-      "name": "go-ruler",
-      "age":  1.24,
-    },
-  })
-
-  fmt.Println(result == true)
-}
-```
-
-## License
-Copyright 2015 Thomas Hopkins
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this work except in compliance with the License. You may obtain a copy of the License in the LICENSE file, or at:
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+This is an initial draft with active development going on. I would recommend against using this in production systems.
