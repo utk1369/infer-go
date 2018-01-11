@@ -1,0 +1,20 @@
+{
+  "name": "Mandatory Details Check for a given User",
+  "require": "all",
+  "rules": [
+    {
+      "comparator": "exists",
+      "path": "details.name"
+    },
+    {
+      "comparator": "eq",
+      "path": "verified",
+      "value": "Y"
+    },
+    {
+      "comparator": "gt",
+      "path": "details.age",
+      "value": 18
+    }
+  ]
+}

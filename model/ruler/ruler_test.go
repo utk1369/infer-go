@@ -2,6 +2,8 @@ package ruler
 
 import (
 	"testing"
+
+	"bitbucket.org/grabpay/infer-go/util"
 )
 
 func TestRules(t *testing.T) {
@@ -230,10 +232,10 @@ func TestPluck(t *testing.T) {
 	}
 
 	for _, e := range exps {
-		res := pluck(e.o, e.seeking)
+		res := util.Pluck(e.o, e.seeking)
 		if res != e.value {
 			t.Errorf(
-				"error with: %s\nfailed to pluck! %s != %s",
+				"error with: %s\nfailed to Pluck! %s != %s",
 				e.name,
 				res,
 				e.value,
@@ -250,7 +252,7 @@ func BenchmarkPluckShallow(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i += 1 {
-		r := pluck(o, "hey.there")
+		r := util.Pluck(o, "hey.there")
 		if r != 4 {
 			b.Errorf("fail bench, val was %s", r)
 		}
@@ -277,7 +279,7 @@ func BenchmarkPluckDeep(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i += 1 {
-		r := pluck(o, "test.thing.here.today.is.awesome.with.thestuff")
+		r := util.Pluck(o, "test.thing.here.today.is.awesome.with.thestuff")
 		if r != "no dice" {
 			b.Errorf("fail bench, val was %s", r)
 		}

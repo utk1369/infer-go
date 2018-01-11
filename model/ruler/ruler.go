@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"reflect"
 	"regexp"
-	"strings"
 
 	"fmt"
 
 	"errors"
 
+	"strings"
+
+	"bitbucket.org/grabpay/infer-go/enum"
+	"bitbucket.org/grabpay/infer-go/util"
 	"github.com/tj/go-debug"
 )
 
@@ -34,8 +37,47 @@ const (
 )
 
 type Ruler struct {
-	Require *string `json:"require"`
-	Rules   []*Rule `json:"rules"`
+	Name      *string        `json:"name"`
+	Require   *enum.Matchers `json:"require"`
+	IterateOn *string        `json:"iterateOn"`
+	Rules     []*Rule        `json:"rules"`
+}
+
+func (r *Ruler) Test(o map[string]interface{}) (bool, map[string]interface{}, error) {
+
+	r.ReplaceIteratorTokens(o)
+	// Test All By Default for backward compatibility
+	if r.Require == nil || *r.Require == enum.All {
+		v, extra := testAll(r, o)
+		return v, extra, nil
+	} else if *r.Require == enum.Any {
+		v, extra := testAny(r, o)
+		return v, extra, nil
+	}
+	return false, nil, errors.New("invalid require condition: " + fmt.Sprint(*r.Require) + " for ruler: " + r.String())
+}
+
+func (ruler *Ruler) ReplaceIteratorTokens(param map[string]interface{}) error {
+	if ruler.IterateOn == nil {
+		return nil
+	}
+	obj := util.Pluck(param, *ruler.IterateOn)
+	if obj == nil || reflect.TypeOf(obj).Kind() != reflect.Slice {
+		return errors.New("Invalid Path to iterate on: " + *ruler.IterateOn)
+	}
+
+	t := []*Rule{}
+	for _, rule := range ruler.Rules {
+		s := reflect.ValueOf(obj)
+		for i := 0; i < s.Len(); i++ {
+			replacedRule := new(Rule)
+			util.DeepClone(rule, replacedRule)
+			replacedRule.Path = strings.Replace(rule.Path, fmt.Sprint(enum.RuleIterator), fmt.Sprint(i), -1)
+			t = append(t, replacedRule)
+		}
+	}
+	ruler.Rules = t
+	return nil
 }
 
 func (ruler *Ruler) String() string {
@@ -46,14 +88,19 @@ func (ruler *Ruler) String() string {
 	return rules
 }
 
+func (ruler *Ruler) GetErrors() []error {
+	return []error{}
+}
+
 // creates a new Ruler for you
 // optionally accepts a pointer to a slice of filters
 // if you have filters that you want to start with
 func NewRuler(rules []*Rule) *Ruler {
 	if rules != nil {
 		return &Ruler{
-			Require: nil,
-			Rules:   rules,
+			Require:   nil,
+			IterateOn: nil,
+			Rules:     rules,
 		}
 	}
 
@@ -63,14 +110,14 @@ func NewRuler(rules []*Rule) *Ruler {
 // returns a new ruler with filters parsed from JSON data
 // expects JSON as a slice of bytes and will parse your JSON for you!
 func NewRulerWithJson(jsonstr []byte) (*Ruler, error) {
-	var rules []*Rule
+	var ruler *Ruler
 
-	err := json.Unmarshal(jsonstr, &rules)
+	err := json.Unmarshal(jsonstr, &ruler)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewRuler(rules), nil
+	return ruler, nil
 }
 
 // adds a new rule for the property at `path`
@@ -91,24 +138,12 @@ func (r *Ruler) Rule(path string) *RulerRule {
 	}
 }
 
-func (r *Ruler) Test(o map[string]interface{}) (bool, map[string]interface{}, error) {
-	// Test All By Default for backward compatibility
-	if r.Require == nil || *r.Require == "all" {
-		v, extra := testAll(r, o)
-		return v, extra, nil
-	} else if *r.Require == "any" {
-		v, extra := testAny(r, o)
-		return v, extra, nil
-	}
-	return false, nil, errors.New("invalid require condition: " + *r.Require + " for ruler: " + r.String())
-}
-
 // tests all the Rules (i.e. filters) in your set of Rules,
 // given a map that looks like a JSON object
 // (map[string]interface{})
 func testAll(r *Ruler, o map[string]interface{}) (bool, map[string]interface{}) {
 	for _, f := range r.Rules {
-		val := pluck(o, f.Path)
+		val := util.Pluck(o, f.Path)
 		failureExtra := "Rule: [" + fmt.Sprint(f) + "] did not pass."
 
 		if val != nil && f.Value != nil {
@@ -145,7 +180,7 @@ func testAll(r *Ruler, o map[string]interface{}) (bool, map[string]interface{}) 
 // (map[string]interface{})
 func testAny(r *Ruler, o map[string]interface{}) (bool, map[string]interface{}) {
 	for _, f := range r.Rules {
-		val := pluck(o, f.Path)
+		val := util.Pluck(o, f.Path)
 
 		if val != nil && f.Value != nil {
 			// both the actual and expected value must be comparable
@@ -321,46 +356,4 @@ func (r *Ruler) regexp(actual, expected interface{}) bool {
 	}
 
 	return reg.MatchString(astring)
-}
-
-// given a map, pull a property from it at some deeply nested depth
-// this reimplements (most of) JS `pluck` in go: https://github.com/gjohnson/pluck
-func pluck(o map[string]interface{}, path string) interface{} {
-	// support dots for now ebcause thats all we need
-	parts := strings.Split(path, ".")
-
-	if len(parts) == 1 && o[parts[0]] != nil {
-		// if there is only one part, just return that property value
-		return o[parts[0]]
-	} else if len(parts) > 1 && o[parts[0]] != nil {
-		var prev map[string]interface{}
-		var ok bool
-		if prev, ok = o[parts[0]].(map[string]interface{}); !ok {
-			// not an object type! ...or a map, yeah, that.
-			return nil
-		}
-
-		for i := 1; i < len(parts)-1; i += 1 {
-			// we need to check the existence of another
-			// map[string]interface for every property along the way
-			cp := parts[i]
-
-			if prev[cp] == nil {
-				// didn't find the property, it's missing
-				return nil
-			}
-			var ok bool
-			if prev, ok = prev[cp].(map[string]interface{}); !ok {
-				return nil
-			}
-		}
-
-		if prev[parts[len(parts)-1]] != nil {
-			return prev[parts[len(parts)-1]]
-		} else {
-			return nil
-		}
-	}
-
-	return nil
 }

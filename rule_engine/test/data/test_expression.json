@@ -1,0 +1,142 @@
+{
+  "id": "123xxxx456",
+  "name": "Test Expression All",
+  "desc": "Checking all match for expression",
+  "require": "all",
+  "when": [
+    {
+      "require": "all",
+      "desc": "Mandatory fields Check",
+      "name": "Cond1",
+      "iterateOn": "users",
+      "expressions": [
+        {
+          "require": "all",
+          "name": "Exp1",
+          "desc": "Test Expression",
+          "rulers": [
+            {
+              "require": "all",
+              "rules": [
+                {
+                  "comparator": "gt",
+                  "path": "age",
+                  "value": 2
+                },
+                {
+                  "comparator": "exists",
+                  "path": "details.name"
+                }
+              ]
+            },
+            {
+              "require": "any",
+              "rules": [
+                {
+                  "comparator": "eq",
+                  "path": "age",
+                  "value": 17
+                },
+                {
+                  "comparator": "eq",
+                  "path": "details.name",
+                  "value": "testx"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "require": "any",
+          "name": "Exp2",
+          "desc": "Test Array Expression",
+          "rulers": [
+            {
+              "require": "all",
+              "rules": [
+                {
+                  "comparator": "eq",
+                  "path": "users.$$$.verified",
+                  "value": "Y"
+                },
+                {
+                  "comparator": "neq",
+                  "path": "users.$$$.aadharId",
+                  "value": ""
+                }
+              ]
+            },
+            {
+              "require": "all",
+              "rules": [
+                {
+                  "comparator": "eq",
+                  "path": "users.$$$.verified",
+                  "value": "N"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "require": "all",
+          "name": "Exp3",
+          "desc": "Test Ruler Iterator Expression",
+          "iterateOn": "users",
+          "rulers": [
+            {
+              "require": "any",
+              "rules": [
+                {
+                  "comparator": "eq",
+                  "path": "users.$$.verified",
+                  "value": "Y"
+                },
+                {
+                  "comparator": "neq",
+                  "path": "users.$.aadharId",
+                  "value": ""
+                }
+              ]
+            },
+            {
+              "require": "all",
+              "iterateOn": "users",
+              "rules": [
+                {
+                  "comparator": "neq",
+                  "path": "users.$.type",
+                  "value": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "require": "all",
+          "name": "Exp4",
+          "desc": "Test Multiple Iterator Expression",
+          "iterateOn": "users",
+          "rulers": [
+            {
+              "require": "all",
+              "iterateOn": "users",
+              "rules": [
+                {
+                  "comparator": "eq",
+                  "path": "users.$$.verified",
+                  "value": "Y"
+                },
+                {
+                  "comparator": "eq",
+                  "path": "users.$.aadharId",
+                  "value": "1234"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

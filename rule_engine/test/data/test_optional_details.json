@@ -1,0 +1,14 @@
+{
+  "name": "Optional Details Check for a given User",
+  "require": "any",
+  "rules": [
+    {
+      "comparator": "exists",
+      "path": "details.passport_number"
+    },
+    {
+      "comparator": "exists",
+      "path": "details.pan_number"
+    }
+  ]
+}

@@ -1,40 +1,24 @@
 package rule_engine
 
 import (
-	"errors"
-
-	"bitbucket.org/grabpay/go-ruler/model"
+	"bitbucket.org/grabpay/infer-go/model"
 )
 
 type Engine struct {
-	ruleSet *model.RuleSet
+	condition model.Condition
+	param     map[string]interface{}
 }
 
-func NewEngine(r *model.RuleSet) *Engine {
+func NewEngine(c model.Condition, param map[string]interface{}) *Engine {
 	return &Engine{
-		ruleSet: r,
+		condition: c,
+		param:     param,
 	}
 }
 
-func (engine *Engine) Run(params ...map[string]interface{}) (bool, map[string]interface{}, error) {
-	ruleSet := engine.ruleSet
-	whenMatcher := *ruleSet.Require
-	for _, when := range ruleSet.When {
-		truth, extras, err := when.IsSatisfied(params[0])
-		if err != nil {
-			return false, nil, err
-		} else if whenMatcher == "all" && truth == false {
-			extras["ruleset"] = ruleSet
-			return false, extras, err
-		} else if whenMatcher == "any" && truth == true {
-			return true, nil, nil
-		}
+func (engine *Engine) Run() (bool, map[string]interface{}, error) {
+	if engine.condition.GetErrors() != nil && len(engine.condition.GetErrors()) > 0 {
+		return false, nil, engine.condition.GetErrors()[0]
 	}
-
-	if whenMatcher == "all" {
-		return true, nil, nil
-	} else if whenMatcher == "any" {
-		return false, map[string]interface{}{"ruleSet": ruleSet}, nil
-	}
-	return false, nil, errors.New("invalid require condition: " + whenMatcher + " for ruleSet: " + *ruleSet.Name)
+	return engine.condition.Test(engine.param)
 }

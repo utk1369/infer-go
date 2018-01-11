@@ -1,0 +1,64 @@
+{
+  "id": "1",
+  "name": "Compute KYC",
+  "policy": "default",
+  "country": "SG",
+  "desc": "KYC Computation Logic",
+  "when": [
+        {
+          "require": "all",
+          "desc": "Mandatory fields Check",
+          "ruler": {
+            "rules": {
+              "all": [
+                {
+                  "comparator": "exists",
+                  "path": "UserDetails.BusinessType"
+                },
+                {
+                  "comparator": "eq",
+                  "path": "UserDetails.MerchantDetails.BusinessTradingName",
+                  "value": "Test Trading Name1"
+                },
+                {
+                  "comparator": "containsAll",
+                  "path": "UserDetails.MerchantUBODetails.$.address"
+                }
+              ],
+              "any": [
+                {
+                  "comparator": "exists",
+                  "path": "UserDetails.BusinessType"
+                },
+                {
+                  "comparator": "eq",
+                  "path": "UserDetails.MerchantDetails.BusinessTradingName",
+                  "value": "Test Trading Name1"
+                },
+                {
+                  "comparator": "containsAll",
+                  "path": "UserDetails.MerchantUBODetails.$.address"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "require": "any",
+          "ruler": {
+            "rules": [
+              {
+                "comparator": "exists",
+                "path": "UserDetails.BusinessType"
+              },
+              {
+                "comparator": "eq",
+                "path": "UserDetails.MerchantDetails.BusinessTradingName",
+                "value": "Test Trading Name2"
+              }
+            ]
+          }
+        }
+      ]
+}
+
