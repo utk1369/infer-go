@@ -3,8 +3,8 @@ package test
 import (
 	"testing"
 
-	"bitbucket.org/grabpay/infer-go/model/ruler"
-	"bitbucket.org/grabpay/infer-go/rule_engine"
+	"github.com/utk1369/infer-go/model/ruler"
+	"github.com/utk1369/infer-go/rule_engine"
 )
 
 func TestEngineForRulerAllSuccess(t *testing.T) {

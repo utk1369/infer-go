@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"strings"
 
-	"bitbucket.org/grabpay/infer-go/enum"
-	"bitbucket.org/grabpay/infer-go/model/ruler"
-	"bitbucket.org/grabpay/infer-go/util"
+	"github.com/utk1369/infer-go/enum"
+	"github.com/utk1369/infer-go/model/ruler"
+	"github.com/utk1369/infer-go/util"
 )
 
 type Expression struct {

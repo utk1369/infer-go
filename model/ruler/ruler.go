@@ -11,9 +11,9 @@ import (
 
 	"strings"
 
-	"bitbucket.org/grabpay/infer-go/enum"
-	"bitbucket.org/grabpay/infer-go/util"
 	"github.com/tj/go-debug"
+	"github.com/utk1369/infer-go/enum"
+	"github.com/utk1369/infer-go/util"
 )
 
 var ruleDebug = debug.Debug("ruler:rule")

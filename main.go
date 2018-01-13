@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"bitbucket.org/grabpay/infer-go/model/ruler"
+	"github.com/utk1369/infer-go/model/ruler"
 )
 
 func TestNew() {

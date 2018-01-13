@@ -1,7 +1,7 @@
 package rule_engine
 
 import (
-	"bitbucket.org/grabpay/infer-go/model"
+	"github.com/utk1369/infer-go/model"
 )
 
 type Engine struct {

@@ -3,7 +3,7 @@ package ruler
 import (
 	"testing"
 
-	"bitbucket.org/grabpay/infer-go/util"
+	"github.com/utk1369/infer-go/util"
 )
 
 func TestRules(t *testing.T) {
